@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ToolKits — Visuels Promotionnels</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f5f3ef;
+      --card: #ffffff;
+      --ink: #1a1a1a;
+      --muted: #6b6b6b;
+      --accent: #c8a96e;
+      --border: #e4e0d8;
+      --radius: 12px;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background-color: var(--bg);
+      color: var(--ink);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 48px 20px 64px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 48px;
+      animation: fadeUp 0.6s ease both;
+    }
+
+    .eyebrow {
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent);
+      font-weight: 500;
+      margin-bottom: 12px;
+    }
+
+    h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(32px, 6vw, 48px);
+      color: var(--ink);
+      line-height: 1.2;
+      margin-bottom: 14px;
+    }
+
+    .subtitle {
+      font-size: 15px;
+      color: var(--muted);
+      max-width: 420px;
+      line-height: 1.6;
+    }
+
+    .divider {
+      width: 48px;
+      height: 2px;
+      background: var(--accent);
+      margin: 20px auto 0;
+    }
+
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      width: 100%;
+      max-width: 720px;
+      margin-bottom: 40px;
+    }
+
+    @media (max-width: 500px) {
+      .gallery { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      animation: fadeUp 0.6s ease both;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.08); }
+    .card:nth-child(1) { animation-delay: 0.1s; }
+    .card:nth-child(2) { animation-delay: 0.2s; }
+    .card:nth-child(3) { animation-delay: 0.3s; }
+    .card:nth-child(4) { animation-delay: 0.4s; }
+
+    .card img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .card-label {
+      padding: 12px 16px;
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 500;
+      border-top: 1px solid var(--border);
+    }
+
+    .download-wrap {
+      animation: fadeUp 0.6s ease 0.5s both;
+      text-align: center;
+    }
+
+    .btn-download {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--ink);
+      color: #fff;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 500;
+      padding: 16px 36px;
+      border-radius: 50px;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      transition: background 0.2s ease, transform 0.2s ease;
+      letter-spacing: 0.02em;
+    }
+
+    .btn-download:hover:not(:disabled) { background: var(--accent); transform: scale(1.03); }
+    .btn-download:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    .btn-download svg {
+      width: 18px; height: 18px;
+      stroke: currentColor; fill: none;
+      stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+    }
+
+    .note { margin-top: 14px; font-size: 12px; color: var(--muted); }
+
+    .progress-wrap {
+      width: 260px;
+      height: 4px;
+      background: var(--border);
+      border-radius: 99px;
+      margin: 16px auto 0;
+      overflow: hidden;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .progress-wrap.visible { opacity: 1; }
+
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: var(--accent);
+      border-radius: 99px;
+      transition: width 0.3s ease;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--ink);
+      color: #fff;
+      padding: 12px 24px;
+      border-radius: 50px;
+      font-size: 13px;
+      font-weight: 500;
+      opacity: 0;
+      transition: all 0.35s ease;
+      pointer-events: none;
+      white-space: nowrap;
+      z-index: 100;
+    }
+
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    footer { margin-top: 64px; font-size: 12px; color: #bbb; letter-spacing: 0.05em; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <p class="eyebrow">Visuels exclusifs</p>
+    <h1>ToolKits</h1>
+    <p class="subtitle">Scannez et téléchargez nos 4 visuels en un seul clic. Aucun compte requis.</p>
+    <div class="divider"></div>
+  </header>
+
+  <div class="gallery">
+    <!--
+    ================================================================
+    ✏️  REMPLACE les noms de fichiers par les vrais noms de tes images.
+        Le fichier image doit être dans le dossier "images/"
+        Exemple : si ton image s'appelle "banniere-ete.jpg"
+        → remplace "images/visuel1.jpg" par "images/banniere-ete.jpg"
+    ================================================================
+    -->
+    <div class="card">
+      <img src="images/visuel1.jpg" alt="Visuel 1"
+           onerror="this.src='https://placehold.co/600x400/f0ede8/bbb?text=Visuel+01'"/>
+      <div class="card-label">Visuel 01</div>
+    </div>
+    <div class="card">
+      <img src="images/visuel2.jpg" alt="Visuel 2"
+           onerror="this.src='https://placehold.co/600x400/f0ede8/bbb?text=Visuel+02'"/>
+      <div class="card-label">Visuel 02</div>
+    </div>
+    <div class="card">
+      <img src="images/visuel3.jpg" alt="Visuel 3"
+           onerror="this.src='https://placehold.co/600x400/f0ede8/bbb?text=Visuel+03'"/>
+      <div class="card-label">Visuel 03</div>
+    </div>
+    <div class="card">
+      <img src="images/visuel4.jpg" alt="Visuel 4"
+           onerror="this.src='https://placehold.co/600x400/f0ede8/bbb?text=Visuel+04'"/>
+      <div class="card-label">Visuel 04</div>
+    </div>
+  </div>
+
+  <div class="download-wrap">
+    <button class="btn-download" id="dlBtn" onclick="downloadAll()">
+      <svg viewBox="0 0 24 24">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="7 10 12 15 17 10"/>
+        <line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      Télécharger les 4 visuels
+    </button>
+    <p class="note">Fichier ZIP · Aucun compte requis</p>
+    <div class="progress-wrap" id="progressWrap">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+  </div>
+
+  <footer>© 2025 — ToolKits</footer>
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ================================================================
+    // ✏️  REMPLACE les noms de fichiers ici aussi
+    //     (ils doivent correspondre exactement à ceux du dossier images/)
+    // ================================================================
+    const IMAGES = [
+      { path: 'images/visuel1.jpg', name: 'visuel1.jpg' },
+      { path: 'images/visuel2.jpg', name: 'visuel2.jpg' },
+      { path: 'images/visuel3.jpg', name: 'visuel3.jpg' },
+      { path: 'images/visuel4.jpg', name: 'visuel4.jpg' },
+    ];
+
+    async function downloadAll() {
+      const btn          = document.getElementById('dlBtn');
+      const progressWrap = document.getElementById('progressWrap');
+      const progressBar  = document.getElementById('progressBar');
+
+      btn.disabled = true;
+      btn.innerHTML = `<svg viewBox="0 0 24 24" style="animation:spin 1s linear infinite;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;width:18px;height:18px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Préparation…`;
+      progressWrap.classList.add('visible');
+      progressBar.style.width = '0%';
+
+      try {
+        const zip    = new JSZip();
+        const folder = zip.folder('ToolKits');
+
+        for (let i = 0; i < IMAGES.length; i++) {
+          const { path, name } = IMAGES[i];
+          const response = await fetch(path);
+          if (!response.ok) throw new Error(`Impossible de charger ${name}`);
+          const blob = await response.blob();
+          folder.file(name, blob);
+          progressBar.style.width = Math.round(((i + 1) / IMAGES.length) * 80) + '%';
+        }
+
+        showToast('📦 Compression en cours…');
+        progressBar.style.width = '90%';
+
+        const zipBlob = await zip.generateAsync({ type: 'blob' });
+        progressBar.style.width = '100%';
+
+        const url = URL.createObjectURL(zipBlob);
+        const a   = document.createElement('a');
+        a.href     = url;
+        a.download = 'ToolKits.zip';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        showToast('✅ Téléchargement lancé !');
+
+      } catch (err) {
+        showToast('❌ Erreur : ' + err.message);
+      } finally {
+        setTimeout(() => {
+          btn.disabled = false;
+          btn.innerHTML = `<svg viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;width:18px;height:18px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Télécharger les 4 visuels`;
+          progressWrap.classList.remove('visible');
+          progressBar.style.width = '0%';
+        }, 2500);
+      }
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 3000);
+    }
+  </script>
+
+</body>
+</html>
